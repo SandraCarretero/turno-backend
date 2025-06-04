@@ -23,19 +23,18 @@ const wss = websocketService.initSocketIO(server, app);
 
 app.use(
   cors({
-    origin: ['  https://turno-frontend.vercel.app'],
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(helmet());
 app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true
-  })
-);
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+)
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
