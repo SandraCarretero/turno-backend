@@ -33,6 +33,19 @@
 
 const { upload } = require("../config/cloudinary")
 
-const uploadAvatarMiddleware = upload.single("avatar")
+const uploadAvatarMiddleware = (req, res, next) => {
+  const uploadSingle = upload.single("avatar")
+
+  uploadSingle(req, res, (err) => {
+    if (err) {
+      console.error("Error en upload middleware:", err)
+      return res.status(400).json({
+        error: "Error al procesar la imagen",
+        details: err.message,
+      })
+    }
+    next()
+  })
+}
 
 module.exports = uploadAvatarMiddleware
