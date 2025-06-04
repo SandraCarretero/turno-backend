@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const bcrypt = require('bcrypt'); // Añadir bcrypt
+const bcrypt = require('bcrypt'); 
 const User = require('../models/userModel');
 const { sendRegistrationConfirmation } = require('./emailService');
 
@@ -47,7 +47,6 @@ const authService = {
       const cleanEmail = email.trim().toLowerCase();
       const cleanUsername = username.trim();
 
-      // Verificar si el email ya existe
       const existingUser = await User.findOne({ email: cleanEmail });
       if (existingUser) {
         return {
@@ -63,7 +62,6 @@ const authService = {
         };
       }
 
-      // Verificar si el username ya existe
       const existingName = await User.findOne({ username: cleanUsername });
       if (existingName) {
         return {
@@ -81,11 +79,10 @@ const authService = {
 
       const emailVerificationToken = crypto.randomBytes(32).toString('hex');
 
-      // IMPORTANTE: NO hashear la contraseña aquí, el middleware pre('save') del modelo User lo hará
       const user = new User({
         username: cleanUsername,
         email: cleanEmail,
-        password, // Contraseña sin hashear, el middleware se encargará
+        password,
         emailVerificationToken
       });
 
@@ -120,7 +117,6 @@ const authService = {
     } catch (error) {
       console.error('❌ Registration error:', error);
 
-      // Si es un error de validación de Mongoose/base de datos
       if (error.code === 11000) {
         const field = Object.keys(error.keyPattern)[0];
         const fieldName = field === 'username' ? 'username' : 'email';
@@ -168,7 +164,6 @@ const authService = {
         return { status: 400, data: { message: 'Invalid credentials' } };
       }
 
-      // Usar el método comparePassword del modelo User
       const isPasswordValid = await user.comparePassword(password);
       console.log(`Password valid: ${isPasswordValid}`);
 

@@ -160,13 +160,11 @@ const createRegistrationEmailHtml = (username) => {
 export const sendRegistrationConfirmation = async (userData) => {
   try {
 
-    // Validar datos de entrada
     if (!userData) {
       throw new Error("userData es requerido")
     }
 
     const { username, email } = userData
-    // Validaciones estrictas
     if (!username || typeof username !== "string" || username.trim().length === 0) {
       throw new Error(`Username inválido: "${username}" (tipo: ${typeof username})`)
     }
@@ -193,7 +191,6 @@ export const sendRegistrationConfirmation = async (userData) => {
 
     const transporter = createTransporter()
 
-    // Verificar conexión antes de enviar
     try {
       await transporter.verify()
     } catch (verifyError) {
@@ -209,7 +206,6 @@ export const sendRegistrationConfirmation = async (userData) => {
       text: `¡Hola ${cleanUsername}!\n\n¡Bienvenido/a a Boardify! 🎲\n\nTu cuenta ha sido creada exitosamente y ya puedes comenzar a registrar tus partidas de juegos de mesa.\n\n¿Qué puedes hacer ahora?\n- Registrar tus partidas\n- Gestionar invitados\n- Ver estadísticas\n- Llevar seguimiento de victorias\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Que comience la diversión!\n\nEl equipo de Boardify`,
     }
 
-    // Validar que el destinatario esté definido
     if (!mailOptions.to || mailOptions.to.trim().length === 0) {
       throw new Error(`Destinatario no definido en mailOptions.to: "${mailOptions.to}"`)
     }
@@ -256,7 +252,6 @@ export const testEmailConfiguration = async () => {
   try {
     const transporter = createTransporter()
 
-    // Verificar la conexión
     const isConnected = await transporter.verify()
 
     return {

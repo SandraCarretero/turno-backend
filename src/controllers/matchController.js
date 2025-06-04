@@ -37,7 +37,6 @@ const matchController = {
 
         const match = await matchService.createMatch(matchData);
 
-        // Send notifications to all players (except creator)
         const io = req.app.get('io');
 
         for (const player of players) {
@@ -52,7 +51,6 @@ const matchController = {
               data: { matchId: match._id }
             });
 
-            // Send real-time notification
             io.to(`user_${player.user}`).emit('notification', {
               type: 'match_added',
               message: notification.message,
@@ -97,7 +95,6 @@ const matchController = {
         return res.status(404).json({ message: 'Match not found' });
       }
 
-      // Check if user is part of this match
       const isParticipant = match.players.some(
         player => player.user._id.toString() === req.user._id.toString()
       );
@@ -124,7 +121,6 @@ const matchController = {
         return res.status(404).json({ message: 'Match not found' });
       }
 
-      // Check if user is the creator
       if (match.creator._id.toString() !== req.user._id.toString()) {
         return res
           .status(403)
@@ -156,7 +152,6 @@ const matchController = {
         return res.status(404).json({ message: 'Match not found' });
       }
 
-      // Check if user is the creator
       if (match.creator._id.toString() !== req.user._id.toString()) {
         return res
           .status(403)

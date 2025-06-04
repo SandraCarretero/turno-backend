@@ -9,10 +9,8 @@ const Match = require('../models/matchModel');
 
 exports.autoSyncOnRegistration = async (userId, email, username) => {
   try {
-    // Buscar partidas donde el usuario pudo haber participado como invitado
-    // Buscamos por nombre de invitado que coincida con username o email
     const potentialMatches = await Match.find({
-      'players.user': null, // Solo jugadores invitados
+      'players.user': null,
       $or: [
         { 'players.guestName': { $regex: new RegExp(`^${username}$`, 'i') } },
         { 'players.guestName': { $regex: new RegExp(`^${email}$`, 'i') } }
@@ -26,16 +24,13 @@ exports.autoSyncOnRegistration = async (userId, email, username) => {
       let matchUpdated = false;
 
       for (const player of match.players) {
-        // Si es un invitado y su nombre coincide con el usuario
         if (
           !player.user &&
           player.guestName &&
           (player.guestName.toLowerCase() === username.toLowerCase() ||
             player.guestName.toLowerCase() === email.toLowerCase())
         ) {
-          // Sincronizar el jugador invitado con el usuario registrado
           player.user = userId;
-          // Mantener los datos del invitado por si acaso
           player.guestId = `synced_${Date.now()}`;
 
           matchUpdated = true;

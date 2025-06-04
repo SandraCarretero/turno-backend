@@ -12,7 +12,6 @@ const guestController = {
         const { name, email, avatar, notes } = req.body;
         const createdBy = req.user._id;
 
-        // Validación adicional
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
           console.log('Name validation failed:', name);
           return res.status(400).json({
@@ -21,7 +20,6 @@ const guestController = {
           });
         }
 
-        // Validar email si se proporciona
         if (
           email &&
           email.trim() &&
@@ -62,7 +60,6 @@ const guestController = {
       } catch (error) {
         console.error('Create guest error:', error);
 
-        // Manejar errores específicos de MongoDB
         if (error.code === 11000) {
           return res.status(400).json({
             success: false,

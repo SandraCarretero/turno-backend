@@ -2,7 +2,7 @@ const userService = require('../services/userService');
 const { createNotification } = require('../services/notificationService');
 const User = require('../models/userModel');
 const Match = require('../models/matchModel');
-const fs = require('fs');
+const { cloudinary } = require("../config/cloudinary")
 
 const { updateUserValidations } = require('../validations/userValidations');
 
@@ -34,43 +34,61 @@ const userController = {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          message: 'No se ha subido ningún archivo'
-        });
+          message: "No se ha subido ningún archivo",
+        })
       }
 
-      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      console.log("File uploaded to Cloudinary:", req.file)
+
+      const avatarUrl = req.file.path
+
+      const currentUser = await User.findById(req.user._id)
+
+      if (currentUser.avatar && currentUser.avatar.includes("cloudinary")) {
+        try {
+          const publicId = currentUser.avatar.split("/").pop().split(".")[0]
+          await cloudinary.uploader.destroy(`turno-app/${publicId}`)
+          console.log("Previous avatar deleted from Cloudinary")
+        } catch (cloudinaryError) {
+          console.error("Error deleting previous avatar from Cloudinary:", cloudinaryError)
+        }
+      }
 
       const user = await User.findByIdAndUpdate(
         req.user._id,
         { avatar: avatarUrl },
-        { new: true, runValidators: true }
-      ).select('-password');
+        { new: true, runValidators: true },
+      ).select("-password")
 
       if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Usuario no encontrado'
-        });
+          message: "Usuario no encontrado",
+        })
       }
 
       res.json({
         success: true,
         avatar: user.avatar,
-        message: 'Avatar actualizado correctamente'
-      });
+        message: "Avatar actualizado correctamente",
+      })
     } catch (error) {
-      console.error('Error al subir avatar:', error);
+      console.error("Error al subir avatar:", error)
 
-      // Elimina el archivo subido si hubo un error
-      if (req.file) {
-        await fs.promises.unlink(req.file.path);
+      if (req.file && req.file.public_id) {
+        try {
+          await cloudinary.uploader.destroy(req.file.public_id)
+          console.log("Uploaded file deleted from Cloudinary due to error")
+        } catch (cloudinaryError) {
+          console.error("Error deleting file from Cloudinary:", cloudinaryError)
+        }
       }
 
       res.status(500).json({
         success: false,
-        message: 'Error del servidor al actualizar el avatar',
-        error: error.message
-      });
+        message: "Error del servidor al actualizar el avatar",
+        error: error.message,
+      })
     }
   },
 
@@ -111,7 +129,6 @@ const userController = {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Check if already friends or request exists
       const existingFriend = targetUser.friends.find(
         friend => friend.user.toString() === currentUserId.toString()
       );
@@ -122,14 +139,12 @@ const userController = {
         });
       }
 
-      // Add friend request
       targetUser.friends.push({
         user: currentUserId,
         status: 'pending'
       });
       await targetUser.save();
 
-      // Create notification
       const notification = await createNotification({
         recipient: userId,
         sender: currentUserId,
@@ -137,7 +152,6 @@ const userController = {
         message: `${req.user.username} sent you a friend request`
       });
 
-      // Send real-time notification
       const io = req.app.get('io');
       io.to(`user_${userId}`).emit('notification', {
         type: 'friend_request',
@@ -161,7 +175,6 @@ const userController = {
       const { userId } = req.params;
       const currentUserId = req.user._id;
 
-      // Update current user's friends list
       const currentUser = await User.findById(currentUserId);
       const friendRequest = currentUser.friends.find(
         friend =>
@@ -175,7 +188,6 @@ const userController = {
       friendRequest.status = 'accepted';
       await currentUser.save();
 
-      // Add current user to sender's friends list
       const senderUser = await User.findById(userId);
       senderUser.friends.push({
         user: currentUserId,
@@ -183,7 +195,6 @@ const userController = {
       });
       await senderUser.save();
 
-      // Create notification
       const notification = await createNotification({
         recipient: userId,
         sender: currentUserId,
@@ -191,7 +202,6 @@ const userController = {
         message: `${req.user.username} accepted your friend request`
       });
 
-      // Send real-time notification
       const io = req.app.get('io');
       io.to(`user_${userId}`).emit('notification', {
         type: 'friend_accepted',
@@ -232,7 +242,6 @@ const userController = {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Get user's matches
       const matches = await Match.find({ 'players.user': userId })
         .populate('creator', 'username avatar')
         .populate('players.user', 'username avatar')

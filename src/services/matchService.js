@@ -4,7 +4,6 @@ exports.createMatch = async matchData => {
   const match = new Match(matchData);
   await match.save();
 
-  // Populate the match with user details
   await match.populate('creator', 'username avatar');
   await match.populate('players.user', 'username avatar');
 

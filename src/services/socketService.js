@@ -16,17 +16,13 @@ exports.initSocketIO = (server, app) => {
     }
   });
 
-  // Middleware de autenticación para sockets
   io.use(authenticateSocket);
 
-  // Configuración de eventos de socket
   io.on('connection', socket => {
     console.log('User connected:', socket.userId);
 
-    // Unir al usuario a su sala personal
     socket.join(`user_${socket.userId}`);
 
-    // Eventos para unirse/salir del foro
     socket.on('join_forum', () => {
       socket.join('forum');
     });
@@ -35,13 +31,11 @@ exports.initSocketIO = (server, app) => {
       socket.leave('forum');
     });
 
-    // Evento de desconexión
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.userId);
     });
   });
 
-  // Hacer io accesible en toda la aplicación
   app.set('io', io);
 
   return io;

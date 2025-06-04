@@ -11,7 +11,6 @@ exports.searchGames = async (req, res) => {
 
     const games = await gameService.searchGames(q);
 
-    // Get detailed info for each game
     const detailedGames = (
       await Promise.all(
         games.map(async game => {
@@ -54,7 +53,6 @@ exports.addGameToCollection = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    // Check if game already in collection
     const existingGame = user.games.find(game => game.bggId === bggId);
     if (existingGame) {
       return res.status(400).json({ message: 'Game already in collection' });

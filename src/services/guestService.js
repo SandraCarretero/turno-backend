@@ -30,7 +30,7 @@ exports.searchGuests = async (query, userId) => {
   const guests = await Guest.find({
     createdBy: userId,
     name: regex,
-    syncedWith: null // Solo invitados no sincronizados
+    syncedWith: null
   })
     .select('_id name email avatar totalMatches totalWins')
     .limit(10);
@@ -102,7 +102,6 @@ exports.updateGuest = async (guestId, updateData, userId) => {
 };
 
 exports.deleteGuest = async (guestId, userId) => {
-  // Verificar que no tenga partidas asociadas
   const matchCount = await Match.countDocuments({ 'players.guest': guestId });
 
   if (matchCount > 0) {
@@ -135,14 +134,13 @@ exports.syncGuest = async (guestId, userId, targetUserId) => {
     throw new Error('Guest is already synced with a user');
   }
 
-  // Buscar partidas donde aparece este invitado - buscar por múltiples criterios
   const matches = await Match.find({
     $or: [
-      { 'players.guest': guestId }, // Invitados persistentes
+      { 'players.guest': guestId }, 
       {
         'players.guestName': guest.name,
         'players.user': null
-      } // Invitados temporales con el mismo nombre
+      }
     ]
   });
 
@@ -151,13 +149,11 @@ exports.syncGuest = async (guestId, userId, targetUserId) => {
     let matchUpdated = false;
 
     for (const player of match.players) {
-      // Sincronizar si es el invitado persistente O si es un invitado temporal con el mismo nombre
       if (
         player.guest?.toString() === guestId ||
         (!player.user && player.guestName === guest.name)
       ) {
         player.user = targetUserId;
-        // Mantener la referencia al guest para historial
         if (!player.guest) {
           player.guest = guestId;
         }
@@ -172,7 +168,6 @@ exports.syncGuest = async (guestId, userId, targetUserId) => {
     }
   }
 
-  // Marcar el invitado como sincronizado
   guest.syncedWith = targetUserId;
   guest.syncedAt = new Date();
   await guest.save();

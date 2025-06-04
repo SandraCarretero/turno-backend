@@ -159,7 +159,6 @@ exports.getBestsellers = async (ids = []) => {
     const mappedGames = items
       .map(game => {
         try {
-          // Usar la función getName que ya existe
           const name = getName(game.name);
 
           const stats = game.statistics?.ratings;
@@ -167,7 +166,6 @@ exports.getBestsellers = async (ids = []) => {
             return null;
           }
 
-          // Manejar el ranking de manera más robusta
           let rank = null;
           if (stats.ranks && stats.ranks.rank) {
             const rankData = stats.ranks.rank;
@@ -214,7 +212,6 @@ exports.getBestsellers = async (ids = []) => {
       .filter(game => game !== null);
 
 
-    // Ordenar por número de propietarios (bestsellers)
     return mappedGames.sort((a, b) => b.numowned - a.numowned);
   } catch (error) {
     console.error('Error fetching BGG bestsellers:', error);
