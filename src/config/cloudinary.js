@@ -2,6 +2,13 @@ const cloudinary = require("cloudinary").v2
 const { CloudinaryStorage } = require("multer-storage-cloudinary")
 const multer = require("multer")
 
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.error("Error: Faltan variables de entorno de Cloudinary")
+  console.log("CLOUDINARY_CLOUD_NAME:", !!process.env.CLOUDINARY_CLOUD_NAME)
+  console.log("CLOUDINARY_API_KEY:", !!process.env.CLOUDINARY_API_KEY)
+  console.log("CLOUDINARY_API_SECRET:", !!process.env.CLOUDINARY_API_SECRET)
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -25,7 +32,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, 
+    fileSize: 5 * 1024 * 1024, // 5MB
   },
   fileFilter: (req, file, cb) => {
     console.log("Verificando archivo:", file.originalname, file.mimetype)
