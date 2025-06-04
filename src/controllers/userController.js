@@ -2,7 +2,7 @@ const userService = require('../services/userService');
 const { createNotification } = require('../services/notificationService');
 const User = require('../models/userModel');
 const Match = require('../models/matchModel');
-const { cloudinary } = require("../config/cloudinary")
+const { cloudinary } = require('../config/cloudinary');
 
 const { updateUserValidations } = require('../validations/userValidations');
 
@@ -34,61 +34,71 @@ const userController = {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          message: "No se ha subido ningún archivo",
-        })
+          message: 'No se ha subido ningún archivo'
+        });
       }
 
-      console.log("File uploaded to Cloudinary:", req.file)
+      console.log('File uploaded to Cloudinary:', req.file);
 
-      const avatarUrl = req.file.path
+      const avatarUrl = req.file.path;
 
-      const currentUser = await User.findById(req.user._id)
+      const currentUser = await User.findById(req.user._id);
 
-      if (currentUser.avatar && currentUser.avatar.includes("cloudinary")) {
+      if (currentUser.avatar && currentUser.avatar.includes('cloudinary')) {
         try {
-          const publicId = currentUser.avatar.split("/").pop().split(".")[0]
-          await cloudinary.uploader.destroy(`turno-app/${publicId}`)
-          console.log("Previous avatar deleted from Cloudinary")
+          const urlParts = currentUser.avatar.split('/');
+          const publicIdWithExtension = urlParts
+            .slice(urlParts.indexOf('turno-app'))
+            .join('/'); // 'turno-app/avatar-filename-123456.jpg'
+          const publicId = publicIdWithExtension.replace(/\.[^/.]+$/, '');
+          await cloudinary.uploader.destroy(publicId);
+          console.log('Previous avatar deleted from Cloudinary');
         } catch (cloudinaryError) {
-          console.error("Error deleting previous avatar from Cloudinary:", cloudinaryError)
+          console.error(
+            'Error deleting previous avatar from Cloudinary:',
+            cloudinaryError
+          );
         }
       }
 
       const user = await User.findByIdAndUpdate(
         req.user._id,
         { avatar: avatarUrl },
-        { new: true, runValidators: true },
-      ).select("-password")
+        { new: true, runValidators: true }
+      ).select('-password');
 
       if (!user) {
         return res.status(404).json({
           success: false,
-          message: "Usuario no encontrado",
-        })
+          message: 'Usuario no encontrado'
+        });
       }
 
       res.json({
         success: true,
         avatar: user.avatar,
-        message: "Avatar actualizado correctamente",
-      })
+        message: 'Avatar actualizado correctamente'
+      });
     } catch (error) {
-      console.error("Error al subir avatar:", error)
+      console.error('Error al subir avatar:', error);
 
       if (req.file && req.file.public_id) {
         try {
-          await cloudinary.uploader.destroy(req.file.public_id)
-          console.log("Uploaded file deleted from Cloudinary due to error")
+          await cloudinary.uploader.destroy(publicId);
+          console.log('Uploaded file deleted from Cloudinary due to error');
         } catch (cloudinaryError) {
-          console.error("Error deleting file from Cloudinary:", cloudinaryError)
+          console.error(
+            'Error deleting file from Cloudinary:',
+            cloudinaryError
+          );
         }
       }
 
       res.status(500).json({
         success: false,
-        message: "Error del servidor al actualizar el avatar",
-        error: error.message,
-      })
+        message: 'Error del servidor al actualizar el avatar',
+        error: error.message
+      });
     }
   },
 

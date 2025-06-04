@@ -36,7 +36,7 @@ const { upload } = require("../config/cloudinary")
 const uploadAvatarMiddleware = (req, res, next) => {
   console.log("=== MIDDLEWARE UPLOAD ===")
   console.log("Body:", req.body)
-  console.log("Files:", req.files)
+  console.log("Files:", req.file)
 
   const uploadSingle = upload.single("avatar")
 
