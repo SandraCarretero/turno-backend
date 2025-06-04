@@ -34,18 +34,41 @@
 const { upload } = require("../config/cloudinary")
 
 const uploadAvatarMiddleware = (req, res, next) => {
+  console.log("=== MIDDLEWARE UPLOAD ===")
+  console.log("Body:", req.body)
+  console.log("Files:", req.files)
+
   const uploadSingle = upload.single("avatar")
 
   uploadSingle(req, res, (err) => {
     if (err) {
-      console.error("Error en upload middleware:", err)
-      return res.status(400).json({
-        error: "Error al procesar la imagen",
-        details: err.message,
+      console.error("Error específico en multer:", err)
+
+      // Diferentes tipos de errores de multer
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return next({
+          message: "El archivo es demasiado grande (máximo 5MB)",
+          code: "FILE_TOO_LARGE",
+        })
+      }
+
+      if (err.message.includes("imagen")) {
+        return next({
+          message: "Solo se permiten archivos de imagen",
+          code: "INVALID_FILE_TYPE",
+        })
+      }
+
+      return next({
+        message: err.message || "Error al procesar el archivo",
+        code: err.code || "UPLOAD_ERROR",
       })
     }
+
+    console.log("Middleware completado exitosamente")
     next()
   })
 }
 
 module.exports = uploadAvatarMiddleware
+
