@@ -3,7 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
-const http = require("http");
+const http = require('http');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -12,7 +12,7 @@ const matchRoutes = require('./routes/matchRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const guestRoutes = require('./routes/guestRoutes');
 
-const websocketService = require("./services/socketService");
+const websocketService = require('./services/socketService');
 
 dotenv.config();
 
@@ -21,11 +21,13 @@ const server = http.createServer(app);
 
 const wss = websocketService.initSocketIO(server, app);
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ['  https://turno-frontend.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true
+  })
+);
 
 app.use(helmet());
 app.use(
