@@ -1,5 +1,5 @@
-import { Server } from "socket.io"
-import { authenticateSocket } from "../middleware/authMiddleware.js"
+const { Server } = require("socket.io")
+const { authenticateSocket } = require("../middlewares/authMiddleware")
 
 exports.initSocketIO = (server, app) => {
   // Configurar orígenes permitidos para Socket.IO
