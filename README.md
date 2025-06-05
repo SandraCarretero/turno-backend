@@ -2,7 +2,7 @@
 
 El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Express** y **MongoDB**, diseñada para manejar la lógica de negocio y persistencia de datos de una aplicación para registrar partidas de juegos de mesa con amigos. Integra WebSockets, subida de archivos, envío de correos y control de autenticación con JWT y cifrado de contraseñas.
 
-🔗 **[Ver demo online](https://taskplannerpro-vcq0.onrender.com/)**
+🔗 **[Ver frontend](https://github.com/SandraCarretero/turno-frontend)**
 
 ---
 
@@ -13,7 +13,6 @@ El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Expr
 - Cifrado de contraseñas con bcrypt
 - Edición de perfil y cambio de avatar (con Multer)
 - Eliminación de cuenta
-- Roles de usuario (admin y estándar)
 
 🧑‍🤝‍🧑 **Amistades**
 - Enviar y recibir solicitudes de amistad
@@ -32,14 +31,13 @@ El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Expr
 - Crear, editar, eliminar y consultar partidas
 - Añadir jugadores, puntuaciones y duración
 - Asignación de juegos de mesa a cada partida
-- Acceso filtrado por usuario y rol
 
 🎲 **Juegos de mesa**
 - Guardar juegos propios
 - Buscar información usando la API externa de [BoardGameGeek](https://boardgamegeek.com/xmlapi2)
 
 📧 **Email (Nodemailer)**
-- Envío de correos al registrarse u otras acciones importantes (configurable)
+- Envío de correos al registrarse
 
 ---
 
@@ -67,14 +65,6 @@ El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Expr
 ![Bcrypt](https://img.shields.io/badge/Bcrypt-ffcc00?style=for-the-badge)
 
 ---
-
-## 📦 Instalación y ejecución
-
-### 🔧 Requisitos
-
-- Node.js instalado
-- MongoDB activo
-- Archivo `.env` con variables necesarias (ver abajo)
 
 ## Autor ✒️
 
