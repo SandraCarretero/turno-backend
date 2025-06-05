@@ -63,6 +63,8 @@ El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Expr
 ![Multer](https://img.shields.io/badge/Multer-00BFFF?style=for-the-badge)
 ![Nodemailer](https://img.shields.io/badge/Nodemailer-3466A6?style=for-the-badge)
 ![Bcrypt](https://img.shields.io/badge/Bcrypt-ffcc00?style=for-the-badge)
+[![RTK](https://img.shields.io/badge/Redux%20Toolkit-593D88?style=for-the-badge&logo=redux&logoColor=white)](https://redux-toolkit.js.org/)
+
 
 ---
 
