@@ -180,7 +180,7 @@ const userController = {
         recipient: userId,
         sender: currentUserId,
         type: 'friend_request',
-        message: `${req.user.username} sent you a friend request`
+        message: `${req.user.username} te ha enviado una solicitud de amistad`
       });
 
       const io = req.app.get('io');
@@ -230,7 +230,7 @@ const userController = {
         recipient: userId,
         sender: currentUserId,
         type: 'friend_accepted',
-        message: `${req.user.username} accepted your friend request`
+        message: `${req.user.username} aceptó tu solicitud de amistad`
       });
 
       const io = req.app.get('io');

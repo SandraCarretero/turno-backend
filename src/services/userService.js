@@ -270,13 +270,13 @@ exports.getUserStats = async userId => {
             }
           });
         });
+        console.log(companionCounts);
 
         // Encontrar el compañero más frecuente
         if (Object.keys(companionCounts).length > 0) {
           const topCompanion = Object.values(companionCounts).reduce(
             (max, current) => (current.count > max.count ? current : max)
           );
-
           mostPlayedWithFriend = {
             count: topCompanion.count,
             _id: topCompanion.user._id,
