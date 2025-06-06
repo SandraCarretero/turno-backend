@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const Match = require('../models/matchModel');
+const mongoose = require('mongoose');
 
 exports.updateProfile = async (userId, updateData) => {
   const { username, email } = updateData;
@@ -162,170 +163,185 @@ exports.searchUsers = async (query, currentUserId) => {
 // };
 
 exports.getUserStats = async userId => {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-  // Convertir userId a ObjectId si viene como string
-  const userObjectId = new mongoose.Types.ObjectId(userId);
+    // Convertir userId a ObjectId de forma segura
+    let userObjectId;
+    try {
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        userObjectId = new mongoose.Types.ObjectId(userId);
+      } else {
+        userObjectId = userId;
+      }
+    } catch (error) {
+      console.error('❌ Error creating ObjectId:', error);
+      throw new Error('Invalid user ID format');
+    }
 
-  const totalMatches = await Match.countDocuments({
-    'players.user': userObjectId
-  });
+    // 1. Total matches
+    const totalMatches = await Match.countDocuments({
+      'players.user': userObjectId
+    });
 
-  const matchesThisMonth = await Match.countDocuments({
-    'players.user': userObjectId,
-    date: { $gte: startOfMonth }
-  });
+    // 2. Matches this month
+    const matchesThisMonth = await Match.countDocuments({
+      'players.user': userObjectId,
+      date: { $gte: startOfMonth }
+    });
 
-  const uniqueGamesThisMonth = await Match.distinct('game.bggId', {
-    'players.user': userObjectId,
-    date: { $gte: startOfMonth }
-  });
+    // 3. Unique games this month
+    const uniqueGamesThisMonth = await Match.distinct('game.bggId', {
+      'players.user': userObjectId,
+      date: { $gte: startOfMonth }
+    });
 
-  const wins = await Match.countDocuments({
-    'players.user': userObjectId,
-    'players.isWinner': true,
-    $expr: {
-      $in: [
-        userObjectId,
+    // 4. Wins calculation - versión simplificada
+    let wins = 0;
+    try {
+      const winningMatches = await Match.find({
+        'players.user': userObjectId,
+        'players.isWinner': true
+      });
+
+      wins = winningMatches.filter(match =>
+        match.players.some(
+          player =>
+            player.user.toString() === userObjectId.toString() &&
+            player.isWinner
+        )
+      ).length;
+    } catch (error) {
+      console.error('❌ Error calculating wins:', error);
+      wins = 0;
+    }
+
+    // 5. Most played game
+    let mostPlayedGame = null;
+    try {
+      const mostPlayedGameResult = await Match.aggregate([
+        { $match: { 'players.user': userObjectId } },
         {
-          $map: {
-            input: { $filter: { input: '$players', cond: '$$this.isWinner' } },
-            as: 'winner',
-            in: '$$winner.user'
+          $group: {
+            _id: '$game.bggId',
+            count: { $sum: 1 },
+            game: { $first: '$game' }
           }
-        }
-      ]
+        },
+        { $sort: { count: -1 } },
+        { $limit: 1 }
+      ]);
+      mostPlayedGame = mostPlayedGameResult[0] || null;
+    } catch (error) {
+      console.error('❌ Error calculating most played game:', error);
+      mostPlayedGame = null;
     }
-  });
 
-  const mostPlayedGame = await Match.aggregate([
-    { $match: { 'players.user': userObjectId } },
-    {
-      $group: {
-        _id: '$game.bggId',
-        count: { $sum: 1 },
-        game: { $first: '$game' }
-      }
-    },
-    { $sort: { count: -1 } },
-    { $limit: 1 }
-  ]);
+    // 6. Most played with friend - MÉTODO SIMPLIFICADO
+    let mostPlayedWithFriend = null;
 
-  // CORRECCIÓN PRINCIPAL: Agregado mejorado para mostPlayedWithFriend
-  const mostPlayedWithFriend = await Match.aggregate([
-    // 1. Filtrar partidas donde el usuario actual participó
-    {
-      $match: {
+    try {
+      // Obtener todas las partidas del usuario con múltiples jugadores
+      const multiPlayerMatches = await Match.find({
         'players.user': userObjectId,
-        // Asegurar que hay al menos 2 jugadores
-        $expr: { $gte: [{ $size: '$players' }, 2] }
-      }
-    },
+        'players.1': { $exists: true } // Asegurar que hay al menos 2 jugadores
+      }).populate('players.user', 'username email name avatar');
 
-    // 2. Desenrollar el array de jugadores
-    { $unwind: '$players' },
+      if (multiPlayerMatches.length > 0) {
+        // Contar compañeros
+        const companionCounts = {};
 
-    // 3. Filtrar para excluir al usuario actual
-    {
-      $match: {
-        'players.user': { $ne: userObjectId }
-      }
-    },
+        multiPlayerMatches.forEach(match => {
+          match.players.forEach(player => {
+            if (
+              player.user &&
+              player.user._id.toString() !== userObjectId.toString()
+            ) {
+              const companionId = player.user._id.toString();
+              if (!companionCounts[companionId]) {
+                companionCounts[companionId] = {
+                  count: 0,
+                  user: player.user
+                };
+              }
+              companionCounts[companionId].count++;
+            }
+          });
+        });
 
-    // 4. Agrupar por usuario y contar partidas
-    {
-      $group: {
-        _id: '$players.user',
-        count: { $sum: 1 }
-      }
-    },
+        // Encontrar el compañero más frecuente
+        if (Object.keys(companionCounts).length > 0) {
+          const topCompanion = Object.values(companionCounts).reduce(
+            (max, current) => (current.count > max.count ? current : max)
+          );
 
-    // 5. Ordenar por cantidad de partidas (descendente)
-    { $sort: { count: -1 } },
-
-    // 6. Tomar solo el primero
-    { $limit: 1 },
-
-    // 7. Hacer lookup para obtener información del usuario
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'userInfo'
-      }
-    },
-
-    // 8. Desenrollar el resultado del lookup
-    { $unwind: '$userInfo' },
-
-    // 9. Proyectar los campos necesarios
-    {
-      $project: {
-        count: 1,
-        _id: '$userInfo._id',
-        name: '$userInfo.name',
-        username: '$userInfo.username',
-        email: '$userInfo.email',
-        avatar: '$userInfo.avatar'
-      }
-    }
-  ]);
-
-  const monthlyStats = await Match.aggregate([
-    {
-      $match: {
-        'players.user': userObjectId,
-        date: { $gte: startOfYear }
-      }
-    },
-    {
-      $group: {
-        _id: { $month: '$date' },
-        totalGames: { $sum: 1 },
-        wins: {
-          $sum: {
-            $cond: [
-              {
-                $in: [
-                  userObjectId,
-                  {
-                    $map: {
-                      input: {
-                        $filter: { input: '$players', cond: '$$this.isWinner' }
-                      },
-                      as: 'winner',
-                      in: '$$winner.user'
-                    }
-                  }
-                ]
-              },
-              1,
-              0
-            ]
-          }
+          mostPlayedWithFriend = {
+            count: topCompanion.count,
+            _id: topCompanion.user._id,
+            username: topCompanion.user.username,
+            email: topCompanion.user.email,
+            name: topCompanion.user.name,
+            avatar: topCompanion.user.avatar
+          };
         }
       }
-    },
-    { $sort: { _id: 1 } }
-  ]);
+    } catch (error) {
+      console.error('❌ Error calculating most played with friend:', error);
+      mostPlayedWithFriend = null;
+    }
 
-  // Asegurar que el resultado sea válido
-  const partnerResult =
-    mostPlayedWithFriend.length > 0 ? mostPlayedWithFriend[0] : null;
+    // 7. Monthly stats - versión simplificada
+    let monthlyStats = [];
+    try {
+      const monthlyStatsResult = await Match.aggregate([
+        {
+          $match: {
+            'players.user': userObjectId,
+            date: { $gte: startOfYear }
+          }
+        },
+        {
+          $group: {
+            _id: { $month: '$date' },
+            totalGames: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+      monthlyStats = monthlyStatsResult;
+    } catch (error) {
+      console.error('❌ Error calculating monthly stats:', error);
+      monthlyStats = [];
+    }
 
-  console.log('🔍 MostPlayedWithFriend query result:', partnerResult);
+    const result = {
+      totalMatches,
+      matchesThisMonth,
+      uniqueGamesThisMonth: uniqueGamesThisMonth.length,
+      winRate: totalMatches > 0 ? ((wins / totalMatches) * 100).toFixed(1) : 0,
+      wins,
+      mostPlayedGame,
+      mostPlayedWithFriend,
+      monthlyStats
+    };
 
-  return {
-    totalMatches,
-    matchesThisMonth,
-    uniqueGamesThisMonth: uniqueGamesThisMonth.length,
-    winRate: totalMatches > 0 ? ((wins / totalMatches) * 100).toFixed(1) : 0,
-    wins,
-    mostPlayedGame: mostPlayedGame[0] || null,
-    mostPlayedWithFriend: partnerResult,
-    monthlyStats
-  };
+    return result;
+  } catch (error) {
+    console.error('🚨 CRITICAL ERROR in getUserStats:', error);
+    console.error('Stack trace:', error.stack);
+
+    // Retornar datos por defecto en caso de error crítico
+    return {
+      totalMatches: 0,
+      matchesThisMonth: 0,
+      uniqueGamesThisMonth: 0,
+      winRate: 0,
+      wins: 0,
+      mostPlayedGame: null,
+      mostPlayedWithFriend: null,
+      monthlyStats: []
+    };
+  }
 };
