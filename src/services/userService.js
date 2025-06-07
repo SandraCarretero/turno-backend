@@ -202,17 +202,15 @@ exports.getUserStats = async userId => {
     let wins = 0;
     try {
       const winningMatches = await Match.find({
-        'players.user': userObjectId,
-        'players.isWinner': true
+        players: {
+          $elemMatch: {
+            user: userObjectId,
+            isWinner: true
+          }
+        }
       });
 
-      wins = winningMatches.filter(match =>
-        match.players.some(
-          player =>
-            player.user.toString() === userObjectId.toString() &&
-            player.isWinner
-        )
-      ).length;
+      wins = winningMatches.length;
     } catch (error) {
       console.error('❌ Error calculating wins:', error);
       wins = 0;
