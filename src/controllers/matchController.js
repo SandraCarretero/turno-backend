@@ -47,7 +47,7 @@ const matchController = {
               recipient: player.user,
               sender: req.user._id,
               type: 'match_added',
-              message: `${req.user.username} added you to a match: ${game.name}`,
+              message: `${req.user.username} te añadió a una partida: ${game.name}`,
               data: { matchId: match._id }
             });
 
@@ -92,7 +92,7 @@ const matchController = {
       const match = await matchService.getMatch(matchId);
 
       if (!match) {
-        return res.status(404).json({ message: 'Match not found' });
+        return res.status(404).json({ message: 'Partida no encontrada' });
       }
 
       const isParticipant = match.players.some(
@@ -100,7 +100,7 @@ const matchController = {
       );
 
       if (!isParticipant) {
-        return res.status(403).json({ message: 'Access denied' });
+        return res.status(403).json({ message: 'Acceso denegado' });
       }
 
       res.json(match);
@@ -118,7 +118,7 @@ const matchController = {
       const match = await matchService.getMatch(matchId);
 
       if (!match) {
-        return res.status(404).json({ message: 'Match not found' });
+        return res.status(404).json({ message: 'Partida no encontrada' });
       }
 
       if (match.creator._id.toString() !== req.user._id.toString()) {
@@ -149,7 +149,7 @@ const matchController = {
       );
 
       if (!match) {
-        return res.status(404).json({ message: 'Match not found' });
+        return res.status(404).json({ message: 'Partida no encontrada' });
       }
 
       if (match.creator._id.toString() !== req.user._id.toString()) {
@@ -159,7 +159,7 @@ const matchController = {
       }
 
       await matchService.deleteMatch(matchId);
-      res.json({ message: 'Match deleted successfully' });
+      res.json({ message: 'Partida eliminada con éxito' });
     } catch (error) {
       console.error('Delete match error:', error);
       res.status(500).json({ message: 'Server error' });

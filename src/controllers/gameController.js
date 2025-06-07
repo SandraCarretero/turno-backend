@@ -69,7 +69,7 @@ exports.addGameToCollection = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: 'Game added to collection' });
+    res.json({ message: 'Juego añadido a la colección' });
   } catch (error) {
     console.error('Add game to collection error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -86,7 +86,7 @@ exports.removeGameFromCollection = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: 'Game removed from collection' });
+    res.json({ message: 'Juego eliminado de la colección' });
   } catch (error) {
     console.error('Remove game from collection error:', error);
     res.status(500).json({ message: 'Server error' });
