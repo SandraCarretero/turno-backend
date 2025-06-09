@@ -1,24 +1,24 @@
-import { createTransporter, config } from "../config/nodemailer.js"
+import { createTransporter, config } from '../config/nodemailer.js';
 
 /**
  * Valida una dirección de email
  */
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+const isValidEmail = email => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
 /**
  * Crea el contenido HTML del correo de confirmación de registro
  */
-const createRegistrationEmailHtml = (username) => {
+const createRegistrationEmailHtml = username => {
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Confirmación de Registro - Boardify</title>
+      <title>Confirmación de Registro - Turno</title>
       <style>
         body {
           font-family: 'Arial', sans-serif;
@@ -112,14 +112,14 @@ const createRegistrationEmailHtml = (username) => {
     <body>
       <div class="email-container">
         <div class="header">
-          <h1>🎲 Boardify</h1>
+          <h1>🎲 Turno</h1>
           <p style="margin: 10px 0 0 0; font-size: 18px;">¡Bienvenido a la comunidad!</p>
         </div>
         
         <div class="content">
           <div class="welcome-message">
             <h2>¡Hola ${username}! 👋</h2>
-            <p>Tu cuenta en Boardify ha sido creada exitosamente. Estamos emocionados de tenerte como parte de nuestra comunidad de amantes de los juegos de mesa.</p>
+            <p>Tu cuenta en Turno ha sido creada exitosamente. Estamos emocionados de tenerte como parte de nuestra comunidad de amantes de los juegos de mesa.</p>
           </div>
           
           <div class="features">
@@ -133,9 +133,9 @@ const createRegistrationEmailHtml = (username) => {
             </ul>
           </div>
           
-          <p>Tu cuenta está lista para usar. Puedes comenzar a registrar tus partidas inmediatamente y aprovechar todas las funcionalidades que Boardify tiene para ofrecerte.</p>
+          <p>Tu cuenta está lista para usar. Puedes comenzar a registrar tus partidas inmediatamente y aprovechar todas las funcionalidades que Turno tiene para ofrecerte.</p>
           
-          <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Esperamos que disfrutes mucho usando Boardify!</p>
+          <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Esperamos que disfrutes mucho usando Turno!</p>
           
           <p style="margin-top: 30px;">
             <strong>¡Que comience la diversión! 🎮</strong>
@@ -143,7 +143,7 @@ const createRegistrationEmailHtml = (username) => {
         </div>
         
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} Boardify. Todos los derechos reservados.</p>
+          <p>&copy; ${new Date().getFullYear()} Turno. Todos los derechos reservados.</p>
           <p style="font-size: 12px; margin-top: 10px;">
             Este es un correo automático. Por favor no respondas a este mensaje.
           </p>
@@ -151,87 +151,93 @@ const createRegistrationEmailHtml = (username) => {
       </div>
     </body>
     </html>
-  `
-}
+  `;
+};
 
 /**
  * Envía un correo de confirmación de registro
  */
-export const sendRegistrationConfirmation = async (userData) => {
+export const sendRegistrationConfirmation = async userData => {
   try {
-
     if (!userData) {
-      throw new Error("userData es requerido")
+      throw new Error('userData es requerido');
     }
 
-    const { username, email } = userData
-    if (!username || typeof username !== "string" || username.trim().length === 0) {
-      throw new Error(`Username inválido: "${username}" (tipo: ${typeof username})`)
+    const { username, email } = userData;
+    if (
+      !username ||
+      typeof username !== 'string' ||
+      username.trim().length === 0
+    ) {
+      throw new Error(
+        `Username inválido: "${username}" (tipo: ${typeof username})`
+      );
     }
 
-    if (!email || typeof email !== "string" || email.trim().length === 0) {
-      throw new Error(`Email inválido: "${email}" (tipo: ${typeof email})`)
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      throw new Error(`Email inválido: "${email}" (tipo: ${typeof email})`);
     }
 
-    const cleanEmail = email.trim().toLowerCase()
-    const cleanUsername = username.trim()
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanUsername = username.trim();
 
     if (!isValidEmail(cleanEmail)) {
-      throw new Error(`Formato de email inválido: "${cleanEmail}"`)
+      throw new Error(`Formato de email inválido: "${cleanEmail}"`);
     }
-
 
     if (!config.EMAIL_USER || !config.EMAIL_PASS) {
       const error = `❌ Faltan credenciales de email:
-        EMAIL_USER: ${config.EMAIL_USER || "NO DEFINIDO"}
-        EMAIL_PASS: ${config.EMAIL_PASS ? "DEFINIDO" : "NO DEFINIDO"}`
-      console.error(error)
-      throw new Error(error)
+        EMAIL_USER: ${config.EMAIL_USER || 'NO DEFINIDO'}
+        EMAIL_PASS: ${config.EMAIL_PASS ? 'DEFINIDO' : 'NO DEFINIDO'}`;
+      console.error(error);
+      throw new Error(error);
     }
 
-    const transporter = createTransporter()
+    const transporter = createTransporter();
 
     try {
-      await transporter.verify()
+      await transporter.verify();
     } catch (verifyError) {
-      console.error("❌ Error en verificación SMTP:", verifyError)
-      throw new Error(`Error de conexión SMTP: ${verifyError.message}`)
+      console.error('❌ Error en verificación SMTP:', verifyError);
+      throw new Error(`Error de conexión SMTP: ${verifyError.message}`);
     }
 
     const mailOptions = {
-      from: `"Boardify 🎲" <${config.EMAIL_USER}>`,
+      from: `"Turno 🎲" <${config.EMAIL_USER}>`,
       to: cleanEmail,
-      subject: `¡Bienvenido/a ${cleanUsername}! Tu cuenta en Boardify está lista 🎮`,
+      subject: `¡Bienvenido/a ${cleanUsername}! Tu cuenta en Turno está lista 🎮`,
       html: createRegistrationEmailHtml(cleanUsername),
-      text: `¡Hola ${cleanUsername}!\n\n¡Bienvenido/a a Boardify! 🎲\n\nTu cuenta ha sido creada exitosamente y ya puedes comenzar a registrar tus partidas de juegos de mesa.\n\n¿Qué puedes hacer ahora?\n- Registrar tus partidas\n- Gestionar invitados\n- Ver estadísticas\n- Llevar seguimiento de victorias\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Que comience la diversión!\n\nEl equipo de Boardify`,
-    }
+      text: `¡Hola ${cleanUsername}!\n\n¡Bienvenido/a a Turno! 🎲\n\nTu cuenta ha sido creada exitosamente y ya puedes comenzar a registrar tus partidas de juegos de mesa.\n\n¿Qué puedes hacer ahora?\n- Registrar tus partidas\n- Gestionar invitados\n- Ver estadísticas\n- Llevar seguimiento de victorias\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Que comience la diversión!\n\nEl equipo de Turno`
+    };
 
     if (!mailOptions.to || mailOptions.to.trim().length === 0) {
-      throw new Error(`Destinatario no definido en mailOptions.to: "${mailOptions.to}"`)
+      throw new Error(
+        `Destinatario no definido en mailOptions.to: "${mailOptions.to}"`
+      );
     }
 
-    const info = await transporter.sendMail(mailOptions)
+    const info = await transporter.sendMail(mailOptions);
 
     return {
       success: true,
-      message: "Correo de confirmación enviado exitosamente.",
+      message: 'Correo de confirmación enviado exitosamente.',
       messageId: info.messageId,
       response: info.response,
       details: {
         accepted: info.accepted,
         rejected: info.rejected,
-        pending: info.pending,
-      },
-    }
+        pending: info.pending
+      }
+    };
   } catch (error) {
-    console.error("❌ Error al enviar el email de confirmación:")
-    console.error("🔍 Detalles del error:", {
+    console.error('❌ Error al enviar el email de confirmación:');
+    console.error('🔍 Detalles del error:', {
       message: error.message,
       code: error.code,
       command: error.command,
       response: error.response,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    })
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
 
     return {
       success: false,
@@ -239,41 +245,41 @@ export const sendRegistrationConfirmation = async (userData) => {
       details: {
         code: error.code,
         command: error.command,
-        response: error.response,
-      },
-    }
+        response: error.response
+      }
+    };
   }
-}
+};
 
 /**
  * Función de prueba para verificar la configuración de email
  */
 export const testEmailConfiguration = async () => {
   try {
-    const transporter = createTransporter()
+    const transporter = createTransporter();
 
-    const isConnected = await transporter.verify()
+    const isConnected = await transporter.verify();
 
     return {
       success: true,
-      message: "Configuración de email verificada correctamente",
+      message: 'Configuración de email verificada correctamente',
       config: {
         user: config.EMAIL_USER,
-        hasPassword: !!config.EMAIL_PASS,
-      },
-    }
+        hasPassword: !!config.EMAIL_PASS
+      }
+    };
   } catch (error) {
-    console.error("❌ Error en la configuración de email:", error)
+    console.error('❌ Error en la configuración de email:', error);
 
     return {
       success: false,
       error: error.message,
       config: {
         user: config.EMAIL_USER,
-        hasPassword: !!config.EMAIL_PASS,
-      },
-    }
+        hasPassword: !!config.EMAIL_PASS
+      }
+    };
   }
-}
+};
 
-export default { sendRegistrationConfirmation, testEmailConfiguration }
+export default { sendRegistrationConfirmation, testEmailConfiguration };
