@@ -1,6 +1,6 @@
-# 🎲 Flowgame - Backend
+# TURNO - Backend
 
-El backend de **Flowgame** es una API RESTful construida con **Node.js**, **Express** y **MongoDB**, diseñada para manejar la lógica de negocio y persistencia de datos de una aplicación para registrar partidas de juegos de mesa con amigos. Integra WebSockets, subida de archivos, envío de correos y control de autenticación con JWT y cifrado de contraseñas.
+El backend de **TURNO** es una API RESTful construida con **Node.js**, **Express** y **MongoDB**, diseñada para manejar la lógica de negocio y persistencia de datos de una aplicación para registrar partidas de juegos de mesa con amigos. Integra WebSockets, subida de archivos, envío de correos y control de autenticación con JWT y cifrado de contraseñas.
 
 🔗 **[Ver frontend](https://github.com/SandraCarretero/turno-frontend)**
 
