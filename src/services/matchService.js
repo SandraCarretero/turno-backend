@@ -52,20 +52,22 @@ exports.deleteMatch = async matchId => {
 };
 
 exports.getMatchesByGame = async (gameId, userId, page = 1, limit = 10) => {
-  const matches = await Match.find({
-    'game.bggId': gameId,
-    'players.user': userId
-  })
+  const query = {
+    'game.bggId': gameId
+  };
+
+  if (userId) {
+    query['players.user'] = userId;
+  }
+
+  const matches = await Match.find(query)
     .populate('creator', 'username avatar')
     .populate('players.user', 'username avatar')
     .sort({ date: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
 
-  const total = await Match.countDocuments({
-    'game.bggId': gameId,
-    'players.user': userId
-  });
+  const total = await Match.countDocuments(query);
 
   return {
     matches,
@@ -74,3 +76,4 @@ exports.getMatchesByGame = async (gameId, userId, page = 1, limit = 10) => {
     total
   };
 };
+

@@ -45,3 +45,19 @@ exports.authenticateSocket = async (socket, next) => {
     next(new Error("Invalid token"))
   }
 }
+
+exports.optionalAuthenticate = async (req, res, next) => {
+  const authHeader = req.header('Authorization');
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.replace('Bearer ', '');
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id).select('-password');
+    } catch (err) {
+      console.warn('Token inválido, se omite req.user');
+    }
+  }
+
+  next();
+};

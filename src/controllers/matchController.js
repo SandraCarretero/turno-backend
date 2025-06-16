@@ -95,13 +95,13 @@ const matchController = {
         return res.status(404).json({ message: 'Partida no encontrada' });
       }
 
-      const isParticipant = match.players.some(
-        player => player.user._id.toString() === req.user._id.toString()
-      );
+      // const isParticipant = match.players.some(
+      //   player => player.user._id.toString() === req.user._id.toString()
+      // );
 
-      if (!isParticipant) {
-        return res.status(403).json({ message: 'Acceso denegado' });
-      }
+      // if (!isParticipant) {
+      //   return res.status(403).json({ message: 'Acceso denegado' });
+      // }
 
       res.json(match);
     } catch (error) {
@@ -173,7 +173,7 @@ const matchController = {
 
       const result = await matchService.getMatchesByGame(
         gameId,
-        req.user._id,
+        req.user._id || null,
         page,
         limit
       );
