@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/search', gameController.searchGames);
 router.get('/popular', authenticate, gameController.getHotGames);
 router.get('/bestsellers', authenticate, gameController.getBestsellers);
-router.get('/:gameId', authenticate, gameController.getGameDetails);
+router.get('/:gameId', gameController.getGameDetails);
 router.post('/collection', authenticate, gameController.addGameToCollection);
 router.delete('/collection/:gameId', authenticate, gameController.removeGameFromCollection);
 
