@@ -9,7 +9,7 @@ router.use(authenticate);
 router.post('/', matchController.createMatch);
 router.get('/', matchController.getUserMatches);
 router.get('/game/:gameId', matchController.getMatchesByGame);
-router.get('/:matchId', optionalAuthenticate, matchController.getMatch);
+router.get('/:matchId', matchController.getMatch);
 router.put('/:matchId', authenticate, matchController.updateMatch);
 router.delete('/:matchId', authenticate, matchController.deleteMatch);
 
