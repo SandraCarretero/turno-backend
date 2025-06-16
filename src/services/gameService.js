@@ -36,6 +36,8 @@ exports.searchGames = async query => {
       ? result.items.item
       : [result.items.item];
 
+       const queryLower = query.toLowerCase();
+
      const filtered = items
       .map(item => ({
         bggId: item.$.id,
