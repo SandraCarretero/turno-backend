@@ -36,9 +36,9 @@ exports.searchGames = async query => {
       ? result.items.item
       : [result.items.item];
 
-       const queryLower = query.toLowerCase();
+    const queryLower = query.toLowerCase();
 
-     const filtered = items
+    const filtered = items
       .map(item => ({
         bggId: item.$.id,
         name: getName(item.name),
@@ -49,8 +49,16 @@ exports.searchGames = async query => {
       .sort((a, b) => {
         if (a.nameLower === queryLower) return -1;
         if (b.nameLower === queryLower) return 1;
-        if (a.nameLower.startsWith(queryLower) && !b.nameLower.startsWith(queryLower)) return -1;
-        if (!a.nameLower.startsWith(queryLower) && b.nameLower.startsWith(queryLower)) return 1;
+        if (
+          a.nameLower.startsWith(queryLower) &&
+          !b.nameLower.startsWith(queryLower)
+        )
+          return -1;
+        if (
+          !a.nameLower.startsWith(queryLower) &&
+          b.nameLower.startsWith(queryLower)
+        )
+          return 1;
         return 0;
       })
       .slice(0, 20);
@@ -114,6 +122,57 @@ exports.getGameDetails = async gameId => {
   }
 };
 
+// exports.getHotGames = async () => {
+//   try {
+//     const response = await axios.get(`${BGG_API_URL}/hot`, {
+//       params: {
+//         type: 'boardgame'
+//       }
+//     });
+
+//     const result = await parser.parseStringPromise(response.data);
+
+//     if (!result.items || !result.items.item) return [];
+
+//     const items = Array.isArray(result.items.item)
+//       ? result.items.item
+//       : [result.items.item];
+
+//     return items.slice(0, 10).map(item => ({
+//       bggId: item.$.id,
+//       name: getName(item.name),
+//       thumbnail: item.thumbnail || '/placeholder.svg?height=50&width=50',
+//       rank: item.$.rank ? parseInt(item.$.rank) : null,
+//       minPlayers: item.minplayers ? parseInt(item.minplayers.$.value) : 1,
+//       maxPlayers: item.maxplayers ? parseInt(item.maxplayers.$.value) : 1,
+//       playingTime: item.playingtime ? parseInt(item.playingtime.$.value) : 0,
+//       minPlayTime: item.minplaytime ? parseInt(item.minplaytime.$.value) : 0,
+//       maxPlayTime: item.maxplaytime ? parseInt(item.maxplaytime.$.value) : 0,
+//       yearPublished: item.yearpublished ? item.yearpublished.$.value : null,
+//       description: item.description || '',
+//       rating: item.statistics?.ratings
+//         ? parseFloat(item.statistics.ratings.average.$.value)
+//         : 0,
+//       complexity: item.statistics?.ratings
+//         ? parseFloat(item.statistics.ratings.averageweight.$.value)
+//         : 0,
+//       categories: item.link
+//         ? item.link
+//             .filter(link => link.$.type === 'boardgamecategory')
+//             .map(cat => cat.$.value)
+//         : [],
+//       mechanics: item.link
+//         ? item.link
+//             .filter(link => link.$.type === 'boardgamemechanic')
+//             .map(mech => mech.$.value)
+//         : []
+//     }));
+//   } catch (error) {
+//     console.error('Error getting BGG hot games:', error);
+//     return [];
+//   }
+// };
+
 exports.getHotGames = async () => {
   try {
     const response = await axios.get(`${BGG_API_URL}/hot`, {
@@ -130,12 +189,24 @@ exports.getHotGames = async () => {
       ? result.items.item
       : [result.items.item];
 
-    return items.slice(0, 10).map(item => ({
-      bggId: item.$.id,
-      name: getName(item.name),
-      thumbnail: item.thumbnail || '/placeholder.svg?height=50&width=50',
-      rank: item.$.rank ? parseInt(item.$.rank) : null
-    }));
+    // Paso 1: Extrae los IDs
+    const ids = items.slice(0, 10).map(item => item.$.id);
+
+    // Paso 2: Recupera los detalles de cada juego
+    const detailedGames = (
+      await Promise.all(
+        ids.map(async id => {
+          try {
+            return await exports.getGameDetails(id); // llama a la función que ya tienes
+          } catch (e) {
+            console.error(`Error getting details for hot game ${id}`, e);
+            return null;
+          }
+        })
+      )
+    ).filter(game => game !== null);
+
+    return detailedGames;
   } catch (error) {
     console.error('Error getting BGG hot games:', error);
     return [];
@@ -156,7 +227,6 @@ exports.getBestsellers = async (ids = []) => {
         stats: 1
       }
     });
-
 
     const result = await parser.parseStringPromise(response.data);
 
@@ -222,7 +292,6 @@ exports.getBestsellers = async (ids = []) => {
         }
       })
       .filter(game => game !== null);
-
 
     return mappedGames.sort((a, b) => b.numowned - a.numowned);
   } catch (error) {
