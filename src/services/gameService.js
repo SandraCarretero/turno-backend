@@ -176,9 +176,7 @@ exports.getGameDetails = async gameId => {
 exports.getHotGames = async () => {
   try {
     const response = await axios.get(`${BGG_API_URL}/hot`, {
-      params: {
-        type: 'boardgame'
-      }
+      params: { type: 'boardgame' }
     });
 
     const result = await parser.parseStringPromise(response.data);
@@ -189,29 +187,68 @@ exports.getHotGames = async () => {
       ? result.items.item
       : [result.items.item];
 
-    // Paso 1: Extrae los IDs
-    const ids = items.slice(0, 10).map(item => item.$.id);
+    const detailedGames = await Promise.all(
+      items.slice(0, 10).map(async item => {
+        const gameId = item.$.id;
+        const details = await exports.getGameDetails(gameId); // <<--- aquí llamas al detalle completo
 
-    // Paso 2: Recupera los detalles de cada juego
-    const detailedGames = (
-      await Promise.all(
-        ids.map(async id => {
-          try {
-            return await exports.getGameDetails(id); // llama a la función que ya tienes
-          } catch (e) {
-            console.error(`Error getting details for hot game ${id}`, e);
-            return null;
-          }
-        })
-      )
-    ).filter(game => game !== null);
+        if (details) {
+          return {
+            ...details,
+            rank: item.$.rank ? parseInt(item.$.rank) : null // añadimos el rank
+          };
+        }
 
-    return detailedGames;
+        return null;
+      })
+    );
+
+    return detailedGames.filter(game => game !== null);
   } catch (error) {
     console.error('Error getting BGG hot games:', error);
     return [];
   }
 };
+
+// exports.getHotGames = async () => {
+//   try {
+//     const response = await axios.get(`${BGG_API_URL}/hot`, {
+//       params: {
+//         type: 'boardgame'
+//       }
+//     });
+
+//     const result = await parser.parseStringPromise(response.data);
+
+//     if (!result.items || !result.items.item) return [];
+
+//     const items = Array.isArray(result.items.item)
+//       ? result.items.item
+//       : [result.items.item];
+
+//     // Paso 1: Extrae los IDs
+//     const ids = items.slice(0, 10).map(item => item.$.id);
+
+//     // Paso 2: Recupera los detalles de cada juego
+//     const detailedGames = (
+//       await Promise.all(
+//         ids.map(async id => {
+//           try {
+//             return await exports.getGameDetails(id); // llama a la función que ya tienes
+//           } catch (e) {
+//             console.error(`Error getting details for hot game ${id}`, e);
+//             return null;
+//           }
+//         })
+//       )
+//     ).filter(game => game !== null);
+
+//     return detailedGames;
+//   } catch (error) {
+//     console.error('Error getting BGG hot games:', error);
+//     return [];
+//   }
+// };
 
 exports.getBestsellers = async (ids = []) => {
   if (ids.length === 0) return [];
