@@ -36,14 +36,24 @@ exports.searchGames = async query => {
       ? result.items.item
       : [result.items.item];
 
-    return items
-      .slice(0, 20)
+     const filtered = items
       .map(item => ({
         bggId: item.$.id,
         name: getName(item.name),
+        nameLower: getName(item.name).toLowerCase(),
         yearPublished: item.yearpublished ? item.yearpublished.$.value : null
       }))
-      .filter(game => game.name);
+      .filter(game => game.nameLower.includes(queryLower))
+      .sort((a, b) => {
+        if (a.nameLower === queryLower) return -1;
+        if (b.nameLower === queryLower) return 1;
+        if (a.nameLower.startsWith(queryLower) && !b.nameLower.startsWith(queryLower)) return -1;
+        if (!a.nameLower.startsWith(queryLower) && b.nameLower.startsWith(queryLower)) return 1;
+        return 0;
+      })
+      .slice(0, 20);
+
+    return filtered;
   } catch (error) {
     console.error('Error searching BGG games:', error);
     return [];
